@@ -1,0 +1,115 @@
+import { supabase } from '@/lib/supabase';
+
+export async function createReward(reward_data: any) {
+    const { data, error } = await supabase
+        .from('rewards')
+        .insert(reward_data)
+        .select();
+
+    if (error) {
+        console.error('Error creating reward:', error);
+        return false;
+    }
+    return true;
+}
+
+export async function getRewards(shopId: string) {
+    const { data, error } = await supabase
+        .from('rewards')
+        .select('*')
+        .eq('shop_id', shopId);
+    if (error) {
+        console.error('Error fetching rewards:', error);
+        return [];
+    }
+    return data;
+}
+
+export async function getRewardNames(shopID: string) {
+    try {
+        // Make sure to filter by shop_id
+        const { data, error } = await supabase
+            .from('rewards')
+            .select('id, name, description')
+            .eq('shop_id', shopID)
+            .eq('is_active', true);
+        
+        if (error) {
+            console.error('Error fetching reward names:', error);
+            return [];
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('Error in getRewardNames:', error);
+        return [];
+    }
+}
+
+export async function getRewardsCount(shop_id: string) {
+    // Get the number of rows in the rewards table
+    const { count, error: countError } = await supabase
+        .from('rewards')
+        .select('*', { count: 'exact' })
+        .eq('shop_id', shop_id);
+    
+    if (countError) {
+        console.error('Error fetching rewards count:', countError);
+        return 0;
+    }
+    return count;
+}
+
+export async function getActiveRewards(shop_id: string) {
+    const { data, error } = await supabase
+        .from('rewards')
+        .select('id, name, description')
+        .eq('shop_id', shop_id)
+        .eq('is_active', true);
+
+    if (error) {
+        console.error('Error fetching active rewards:', error);
+        return [];
+    }
+    return data;
+}
+
+export async function getNumberOfRewardPoints(shop_id: string) {
+    const { data, error } = await supabase
+        .from('rewards')
+        .select('*')
+        .eq('shop_id', shop_id);
+
+    // Sum the points from the rewards
+    let totalPoints = 0;
+    data?.forEach((reward) => {
+        totalPoints += reward.points_required;
+    });
+
+    return totalPoints;
+}
+
+export async function deleteReward(reward_id: string) {
+    const { error } = await supabase
+        .from('rewards')
+        .delete()
+        .eq('id', reward_id);
+    
+        if (error) {
+        console.error('Error deleting reward:', error);
+        return false;
+    }
+    return true;
+}
+
+export async function setStatus(reward_id: string, status: boolean) {
+    const { error } = await supabase
+        .from('rewards')
+        .update({ is_active: status })
+        .eq('id', reward_id);
+    if (error) {
+        console.error('Error setting status:', error);
+        return false;
+    }
+    return true;
+}
